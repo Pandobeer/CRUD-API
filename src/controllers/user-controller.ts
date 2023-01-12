@@ -1,6 +1,7 @@
+import { v4 as uuidv4, validate } from 'uuid';
+
 import { User, UserWithId } from './../user-inteface';
 import { getRequestBody } from './../helpers';
-import { v4 as uuidv4 } from 'uuid';
 
 const users: UserWithId[] = [];
 
@@ -10,21 +11,36 @@ export const getUsers = async (_req: any, res: any) => {
         res.writeHead(200, { 'Content-type': 'application/json' });
         res.end(JSON.stringify({ users, message: 'You got all users' }));
     } catch (err: any) {
-        // res.writeHead(500, { 'Content-type': 'application/json' });
-        res.end(500, JSON.stringify({ message: err.message }));
+        res.writeHead(500, { 'Content-type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Can not get userss' }));
     }
 };
 
-//get User
-// export const getUser = async (_req: any, res: any) => {
-//     try {
-//         const users = await findUsers();
-//         res.writeHead(200, { 'Content-type': 'application/json' });
-//         res.end(JSON.stringify({ users, message: 'You got all users' }));
-//     } catch (err: any) {
-//         console.error(`Operation failed: ${ err.message }`);
-//     }
-// };
+//get User by Id
+export const getUser = async (req: any, res: any) => {
+    try {
+        const userId = req.url?.split('/')[3];
+
+        if (!validate(userId)) {
+            res.writeHead(404, { 'Content-type': 'application/json' });
+            res.end(JSON.stringify({ message: 'User id is invalid' }));
+
+        }
+        const user = users.find((user) => user.id === userId);
+
+        if (!user) {
+            res.writeHead(404, { 'Content-type': 'application/json' });
+            res.end(JSON.stringify({ message: 'User does not exist' }));
+        }
+
+        res.writeHead(200, { 'Content-type': 'application/json' });
+        res.end(JSON.stringify({ user, message: 'User and information about the User' }));
+
+    } catch (err: any) {
+        res.writeHead(404, { 'Content-type': 'application/json' });
+        res.end(JSON.stringify({ message: 'User with this ID does not exist' }));
+    }
+};
 
 //create new User
 export const createUser = async (req: any, res: any) => {
@@ -35,7 +51,10 @@ export const createUser = async (req: any, res: any) => {
         const { username, age, hobbies } = user;
 
         if (!username || !age || !hobbies) {
-            throw new Error('User body does not contain required fields');
+            res.writeHead(400, { 'Content-type': 'application/json' });
+            res.end(JSON.stringify({
+                message: 'User body does not contain required fields'
+            }));
         }
 
         const newUser = {
@@ -50,7 +69,7 @@ export const createUser = async (req: any, res: any) => {
         res.writeHead(201, { 'Content-type': 'application/json' });
         res.end(JSON.stringify({ newUser, message: 'You created new User' }));
     } catch (err: any) {
-        res.writeHead(400, { 'Content-type': 'application/json' });
+        res.writeHead(500, { 'Content-type': 'application/json' });
         res.end(JSON.stringify({ message: err.message }));
     }
 };
