@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 // import url from 'node:url';
 
-import { getUsers, createUser, getUser } from './controllers/user-controller';
+import { getUsers, createUser, getUser, deleteUser } from './controllers/user-controller';
 import { myURL } from './helpers';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -20,6 +20,8 @@ const server = http.createServer((req: any, res: any) => {
         createUser(req, res);
     } else if (req.url.match(/\/api\/users\/([A-Za-z0-9-]+)/) && req.method === 'GET') {
         getUser(req, res);
+    } else if (req.url.match(/\/api\/users\/([A-Za-z0-9-]+)/) && req.method === 'DELETE') {
+        deleteUser(req, res);
     } else {
         res.writeHead(404, { 'Content-type': 'application/json' });
         res.end(JSON.stringify({ message: 'Route not found. Please check your request' }));
