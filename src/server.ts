@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 // import url from 'node:url';
 
-import { getUsers, createUser, getUser, deleteUser } from './controllers/user-controller';
+import { getUsers, createUser, getUser, deleteUser } from './user-controller';
 import { myURL } from './helpers';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -11,7 +11,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const PORT = process.env.PORT;
 // const HOST = process.env.HOST;
 
-const server = http.createServer((req: any, res: any) => {
+export const server = http.createServer((req: any, res: any) => {
     console.log(req.url);
 
     if (req.url === '/api/users' && req.method === 'GET') {
