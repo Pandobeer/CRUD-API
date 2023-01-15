@@ -11,11 +11,11 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const BASE_PORT = Number(process.env.PORT || 4000);
 
-const HOST: string | undefined = process.env.HOST;
+const HOST = process.env.HOST;
 
-const numCpus: number = os.cpus().length;
+const numCpus = os.cpus().length;
 
-const workerPorts: number[] = [...Array(numCpus).keys()].map(i => BASE_PORT + i + 1);
+const workerPorts = Array(numCpus).fill(null).map((_, i) => BASE_PORT + i + 1);
 
 export const multiServer = () => {
     if (cluster.isPrimary) {
@@ -35,6 +35,8 @@ export const multiServer = () => {
             const port = workerPorts[currentPortIndex];
 
             const proxy = http.request({ port, path: req.url, method: req.method }, proxyRes => {
+                console.log(port);
+
                 res.writeHead(proxyRes.statusCode!, proxyRes.headers);
                 proxyRes.pipe(res);
             });
@@ -56,19 +58,18 @@ export const multiServer = () => {
     } else {
         const workerPort = BASE_PORT + cluster.worker!.id;
 
-        http.createServer((req: any, res: any) => {
-
+        http.createServer(async (req: any, res: any) => {
             if (req.url === '/api/users' && req.method === 'GET') {
-                getUsers(req, res);
+                await getUsers(req, res);
                 console.log('current port', req.headers);
             } else if (req.url === '/api/users' && req.method === 'POST') {
-                createUser(req, res);
+                await createUser(req, res);
                 console.log('current port', req.headers);
             } else if (req.url.startsWith('/api/users/') && req.method === 'GET') {
-                getUser(req, res);
+                await getUser(req, res);
                 console.log('current port', req.headers);
             } else if (req.url.startsWith('/api/users/') && req.method === 'DELETE') {
-                deleteUser(req, res);
+                await deleteUser(req, res);
                 console.log('current port', req.headers);
             } else {
                 res.writeHead(404, { 'Content-type': 'application/json' });
@@ -76,17 +77,4 @@ export const multiServer = () => {
             }
         }).listen(workerPort);
     }
-    // ['SIGINT', 'SIGTERM', 'SIGQUIT']
-    //     .forEach(signal => process.on(signal, () => {
-    //         process.exit(0);
-    //     }));
 };
-
-            // process.on('exit', () => {
-        //     server.close(() => {
-        //         process.exit(0);
-        //     });
-        // });
-
-        // "module": "commonjs",
-        // "type": "module",

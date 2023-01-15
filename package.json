@@ -2,12 +2,11 @@
   "name": "crud-api",
   "description": "",
   "version": "1.0.0",
-  "main": "dist/bundle.js",
-
+  "main": "index.js",
   "scripts": {
-    "start:dev": "SET Node_ENV=development& nodemon src/index.ts",
-    "start:prod": "SET Node_ENV=production& webpack --mode=production",
-    "start:multi": "cross-env MODE=multi nodemon src/index.ts"
+    "start:dev": "npx nodemon",
+    "start:prod": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack && node ./build/bundle.js",
+    "start:multi": "cross-env MODE=multi npx nodemon"
   },
   "repository": {
     "type": "git",
@@ -32,8 +31,5 @@
   "bugs": {
     "url": "https://github.com/Pandobeer/CRUD-API/issues"
   },
-  "homepage": "https://github.com/Pandobeer/CRUD-API#readme",
-  "browser": {
-    "[module-name]": false   
-  }
+  "homepage": "https://github.com/Pandobeer/CRUD-API#readme"
 }

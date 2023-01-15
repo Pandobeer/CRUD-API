@@ -4,10 +4,10 @@ import path from 'path';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const PROTOCOL = 'htpp';
+const PROTOCOL = 'http';
 const PATHUSERS = 'api/users';
-const HOST = process.env.HOST;
-const PORT = process.env.PORT;
+const HOST = process.env.HOST || 'localhost';
+const PORT = process.env.PORT || 4000;
 
 export const myURL = new URL(`${PROTOCOL}://${HOST}:${PORT}/${PATHUSERS}`).href;
 

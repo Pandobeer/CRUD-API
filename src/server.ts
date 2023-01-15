@@ -3,12 +3,20 @@ import dotenv from 'dotenv';
 import path from 'path';
 // import url from 'node:url';
 
+// import { fileURLToPath } from 'url';
+// import { dirname } from 'path';
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
+
 import { getUsers, createUser, getUser, deleteUser } from './controllers/user-controller';
 import { myURL } from './helpers';
 
+// dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../.env') });
+
 // const myURL = url.resolve();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 4000;
 // const HOST = process.env.HOST;
 
 export const server = () => {
@@ -31,5 +39,4 @@ export const server = () => {
         console.log(`Server is listening on port ${PORT}`);
         console.log(`URL is ${myURL}`);
     });
-
 }; 
