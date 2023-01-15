@@ -7,7 +7,6 @@ import path from 'path';
 
 import { getUsers, createUser, getUser, deleteUser } from './controllers/user-controller';
 
-
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const BASE_PORT = Number(process.env.PORT || 4000);
@@ -18,122 +17,70 @@ const numCpus: number = os.cpus().length;
 
 const workerPorts: number[] = [...Array(numCpus).keys()].map(i => BASE_PORT + i + 1);
 
-if (cluster.isPrimary) {
-    console.log(`Starting ${numCpus} workers`);
+export const multiServer = () => {
+    if (cluster.isPrimary) {
+        console.log(`Starting ${numCpus} workers`);
 
-    for (let i = 1; i <= numCpus; i += 1) {
-        cluster.fork();
-    }
-
-    cluster.on('exit', (worker) => {
-        console.log(`worker ${worker.process.pid} died`);
-    });
-
-    let currentPortIndex = 0;
-
-    const server = http.createServer((req, res) => {
-        const port = workerPorts[currentPortIndex];
-
-        const proxy = http.request({ port, path: req.url, method: req.method }, proxyRes => {
-            res.writeHead(proxyRes.statusCode!, proxyRes.headers);
-            proxyRes.pipe(res);
-        });
-
-        req.pipe(proxy);
-
-        proxy.on('error', () => {
-            res.writeHead(500);
-            return res.end('Error while connecting to server');
-        });
-
-        currentPortIndex = (currentPortIndex + 1) % numCpus;
-    });
-
-    server.listen(BASE_PORT, () => {
-        console.log(`Load balancer is listening on ${HOST}:${BASE_PORT}/api`);
-    });
-} else {
-    const workerPort = BASE_PORT + cluster.worker!.id;
-
-    http.createServer((req: any, res: any) => {
-
-        if (req.url === '/api/users' && req.method === 'GET') {
-            getUsers(req, res);
-            console.log('current port', req.headers);
-        } else if (req.url === '/api/users' && req.method === 'POST') {
-            createUser(req, res);
-            console.log('current port', req.headers);
-        } else if (req.url.startsWith('/api/users/') && req.method === 'GET') {
-            getUser(req, res);
-            console.log('current port', req.headers);
-        } else if (req.url.startsWith('/api/users/') && req.method === 'DELETE') {
-            deleteUser(req, res);
-            console.log('current port', req.headers);
-        } else {
-            res.writeHead(404, { 'Content-type': 'application/json' });
-            res.end('Route not found. Please check your request');
+        for (let i = 1; i <= numCpus; i += 1) {
+            cluster.fork();
         }
-    }).listen(workerPort);
-}
 
-//TODO - 1: to check
+        cluster.on('exit', (worker) => {
+            console.log(`worker ${worker.process.pid} died`);
+        });
 
-// if (cluster.isPrimary) {
-//     console.log(`Load balancer is running on ${HOST}:${BASE_PORT}/api`);
-//     console.log(`Starting ${numCPUs} workers`);
+        let currentPortIndex = 0;
 
-//     // Fork workers
-//     for (let i = 0; i < numCPUs; i++) {
-//         const worker = cluster.fork();
+        const server = http.createServer((req, res) => {
+            const port = workerPorts[currentPortIndex];
 
-//         worker.on('message', (msg: any) => {
-//             if (msg.cmd && msg.cmd === 'notifyRequest') {
-//                 const nextWorker = getNextWorker();
-//                 nextWorker?.send({ cmd: 'handleRequest', msg });
-//             }
-//         });
-//     }
+            const proxy = http.request({ port, path: req.url, method: req.method }, proxyRes => {
+                res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+                proxyRes.pipe(res);
+            });
 
-//     const getNextWorker = () => {
-//         const indexForWorker: number = workerIndex % numCPUs;
-//         const workersObj: NodeJS.Dict<Worker> | undefined = cluster.workers;
-//         if (workersObj) {
-//             const currentWorker: Worker | undefined = Object.values(workersObj)[indexForWorker];
-//             workerIndex++;
-//             return currentWorker;
-//         }
-//     };
+            req.pipe(proxy);
 
-//     cluster.on('exit', (worker) => {
-//         // process.kill(process.pid);
-//         console.log(`worker ${worker.process.pid} died`);
-//     });
+            proxy.on('error', () => {
+                res.writeHead(500);
+                return res.end('Error while connecting to server');
+            });
 
-//     // cluster.on('disconnect', (worker) => {
-//     //     delete cluster.workers![worker.id];
-//     // });
+            currentPortIndex = (currentPortIndex + 1) % numCpus;
+        });
 
-// } else {
-//     workerPort += Number(cluster.worker!.id);
+        server.listen(BASE_PORT, () => {
+            console.log(`Load balancer is listening on ${HOST}:${BASE_PORT}/api`);
+        });
 
-//     http.createServer((_req: http.IncomingMessage, res: http.ServerResponse) => {
-//         res.writeHead(200);
-//         res.end('hello world\n');
-//     }).listen(`${workerPort}`);
+    } else {
+        const workerPort = BASE_PORT + cluster.worker!.id;
 
-//     console.log(`Worker ${process.pid} started and listening on port ${workerPort}`);
-//     process.on('message', (msg: any) => {
-//         if (msg.cmd && msg.cmd === 'handleRequest') {
-//             console.log(`Worker ${process.pid} handled request: ${msg.msg}`);
-//         }
-//     });
-// }
+        http.createServer((req: any, res: any) => {
 
-    // process.on('exit', (code) => {
-    //     if (code === 0) {
-    //         process.kill(process.pid);
-    //     }
-    // });
+            if (req.url === '/api/users' && req.method === 'GET') {
+                getUsers(req, res);
+                console.log('current port', req.headers);
+            } else if (req.url === '/api/users' && req.method === 'POST') {
+                createUser(req, res);
+                console.log('current port', req.headers);
+            } else if (req.url.startsWith('/api/users/') && req.method === 'GET') {
+                getUser(req, res);
+                console.log('current port', req.headers);
+            } else if (req.url.startsWith('/api/users/') && req.method === 'DELETE') {
+                deleteUser(req, res);
+                console.log('current port', req.headers);
+            } else {
+                res.writeHead(404, { 'Content-type': 'application/json' });
+                res.end('Route not found. Please check your request');
+            }
+        }).listen(workerPort);
+    }
+    // ['SIGINT', 'SIGTERM', 'SIGQUIT']
+    //     .forEach(signal => process.on(signal, () => {
+    //         process.exit(0);
+    //     }));
+};
 
             // process.on('exit', () => {
         //     server.close(() => {
@@ -142,3 +89,4 @@ if (cluster.isPrimary) {
         // });
 
         // "module": "commonjs",
+        // "type": "module",

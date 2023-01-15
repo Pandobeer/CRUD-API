@@ -11,15 +11,6 @@ const PORT = process.env.PORT;
 
 export const myURL = new URL(`${PROTOCOL}://${HOST}:${PORT}/${PATHUSERS}`).href;
 
-// export const getResolvedUrl = (from: string, to: string) => {
-//     const resolvedUrl = new URL(to, new URL(from, 'resolve://'));
-//     if (resolvedUrl.protocol === 'resolve:') {
-//         const { pathname, search } = resolvedUrl;
-//         return pathname + search;
-//     }
-//     return resolvedUrl.toString();
-// };
-
 export const getRequestBody = (req: IncomingMessage): Promise<string> => {
     return new Promise((resolve, reject) => {
         try {

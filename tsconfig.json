@@ -3,9 +3,8 @@
         "lib": [
             "es2022"
         ],
-        "module": "commonjs",
         "target": "es2022",
-        "outDir": "./dist",
+        "outDir": "./dist/",
         "rootDir": "./src",
         "strict": true,
         "esModuleInterop": true,
@@ -13,10 +12,13 @@
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "node"
     },
+    "include": [
+        "./src/**/*.ts"
+    ],
     "exclude": [
-        "node_modules/"
+        "node_modules"
     ],
     "ts-node": {
-        "esm": true,
+        "esm": true
     }
 }
