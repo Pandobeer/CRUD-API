@@ -4,8 +4,6 @@ import { server } from './server';
 
 const IS_MULTI_MODE = process.env.MODE === 'multi';
 
-// dotenv.config();
-
 const runServer = () => {
     if (IS_MULTI_MODE) {
         multiServer();
