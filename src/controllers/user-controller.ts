@@ -1,6 +1,6 @@
 import { v4 as uuidv4, validate } from 'uuid';
 
-import { User, UserWithId } from './../user-inteface';
+import { User } from './../user-inteface';
 import { getRequestBody } from './../helpers';
 import { usersDB } from '../users';
 
@@ -45,6 +45,7 @@ export const getUser = async (req: any, res: any) => {
 export const createUser = async (req: any, res: any) => {
     try {
         const body = await getRequestBody(req);
+
         const user = JSON.parse(body) as User;
 
         const { username, age, hobbies } = user;
@@ -102,7 +103,7 @@ export const deleteUser = async (req: any, res: any) => {
         });
 
         res.writeHead(204, { 'Content-type': 'application/json' });
-        return res.end(JSON.stringify({ message: `User with ${userId} was deleted` }));
+        return res.end(JSON.stringify({ message: `User was successfully deleted` }));
 
     } catch (err: any) {
         res.writeHead(404, { 'Content-type': 'application/json' });
@@ -117,8 +118,6 @@ export const updateUser = async (req: any, res: any) => {
         const userId = req.url?.split('/')[3];
 
         const indexOfUserToUpdate = usersDB.findIndex((user) => userId === user.id);
-
-        console.log(usersDB);
 
         if (!validate(userId)) {
             res.writeHead(400, { 'Content-type': 'application/json' });
