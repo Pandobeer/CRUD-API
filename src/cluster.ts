@@ -5,7 +5,9 @@ import os from 'os';
 import dotenv from 'dotenv';
 import path from 'path';
 
-import { getUsers, createUser, getUser, deleteUser } from './controllers/user-controller';
+import { getUsers, createUser, getUser, deleteUser, updateUser } from './controllers/user-controller';
+import { UserWithId } from './user-inteface';
+import { usersDB } from './users';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
@@ -22,7 +24,11 @@ export const multiServer = () => {
         console.log(`Starting ${numCpus} workers`);
 
         for (let i = 1; i <= numCpus; i += 1) {
-            cluster.fork();
+            const clusterWorker = cluster.fork();
+
+            clusterWorker.on('message', (users: UserWithId[]) => {
+                usersDB.splice(0, usersDB.length, ...users);
+            });
         }
 
         cluster.on('exit', (worker) => {
@@ -35,8 +41,6 @@ export const multiServer = () => {
             const port = workerPorts[currentPortIndex];
 
             const proxy = http.request({ port, path: req.url, method: req.method }, proxyRes => {
-                console.log(port);
-
                 res.writeHead(proxyRes.statusCode!, proxyRes.headers);
                 proxyRes.pipe(res);
             });
@@ -55,22 +59,30 @@ export const multiServer = () => {
             console.log(`Load balancer is listening on ${HOST}:${BASE_PORT}/api`);
         });
 
+        server.on('request', () => {
+            (Object.values(cluster.workers || {})).forEach((worker) => {
+                worker.send(usersDB);
+            });
+        });
+
     } else {
         const workerPort = BASE_PORT + cluster.worker!.id;
+
+        process.on('message', (users: UserWithId[]) => {
+            usersDB.splice(0, usersDB.length, ...users);
+        });
 
         http.createServer(async (req: any, res: any) => {
             if (req.url === '/api/users' && req.method === 'GET') {
                 await getUsers(req, res);
-                console.log('current port', req.headers);
             } else if (req.url === '/api/users' && req.method === 'POST') {
                 await createUser(req, res);
-                console.log('current port', req.headers);
             } else if (req.url.startsWith('/api/users/') && req.method === 'GET') {
                 await getUser(req, res);
-                console.log('current port', req.headers);
             } else if (req.url.startsWith('/api/users/') && req.method === 'DELETE') {
                 await deleteUser(req, res);
-                console.log('current port', req.headers);
+            } else if (req.url.match(/\/api\/users\/([A-Za-z0-9-]+)/) && req.method === 'PUT') {
+                await updateUser(req, res);
             } else {
                 res.writeHead(404, { 'Content-type': 'application/json' });
                 res.end('Route not found. Please check your request');

@@ -2,17 +2,16 @@ import { v4 as uuidv4, validate } from 'uuid';
 
 import { User, UserWithId } from './../user-inteface';
 import { getRequestBody } from './../helpers';
-
-let users: UserWithId[] = [];
+import { usersDB } from '../users';
 
 //get All Users
 export const getUsers = async (_req: any, res: any) => {
     try {
         res.writeHead(200, { 'Content-type': 'application/json' });
-        return res.end(JSON.stringify({ users, message: 'You got all users' }));
+        return res.end(JSON.stringify({ usersDB, message: 'You got all users' }));
     } catch (err: any) {
         res.writeHead(500, { 'Content-type': 'application/json' });
-        return res.end(JSON.stringify({ message: 'Can not get userss' }));
+        return res.end(JSON.stringify({ message: 'Can not get users' }));
     }
 };
 
@@ -26,7 +25,7 @@ export const getUser = async (req: any, res: any) => {
             return res.end(JSON.stringify({ message: 'User id is invalid' }));
         }
 
-        const user = users.find((user) => user.id === userId);
+        const user = usersDB.find((user) => user.id === userId);
 
         if (!user) {
             res.writeHead(404, { 'Content-type': 'application/json' });
@@ -64,7 +63,11 @@ export const createUser = async (req: any, res: any) => {
             hobbies
         };
 
-        users.push(newUser);
+        usersDB.push(newUser);
+
+        res.on('close', () => {
+            process.send?.(usersDB);
+        });
 
         res.writeHead(201, { 'Content-type': 'application/json' });
         return res.end(JSON.stringify({ newUser, message: 'You created new User' }));
@@ -80,28 +83,78 @@ export const deleteUser = async (req: any, res: any) => {
     try {
         const userId = req.url?.split('/')[3];
 
-        const userToDelete = users.find((user) => user.id === userId);
-
-        const indexOfUserToDelete = users.indexOf(userId);
+        const indexOfUserToDelete = usersDB.findIndex((user) => userId === user.id);
 
         if (!validate(userId)) {
             res.writeHead(400, { 'Content-type': 'application/json' });
             return res.end(JSON.stringify({ message: 'User id is invalid' }));
         }
 
-        if (!indexOfUserToDelete || !userToDelete) {
+        if (indexOfUserToDelete < 0) {
             res.writeHead(404, { 'Content-type': 'application/json' });
             return res.end(JSON.stringify({ message: 'User does not exist' }));
         }
 
-        console.log(userId, 'userId', userToDelete, 'userToDelete', indexOfUserToDelete, 'indexOfUserToDelete');
+        usersDB.splice(indexOfUserToDelete, 1);
 
-        users = users.splice(indexOfUserToDelete, 1);
+        res.on('close', () => {
+            process.send?.(usersDB);
+        });
 
         res.writeHead(204, { 'Content-type': 'application/json' });
         return res.end(JSON.stringify({ message: `User with ${userId} was deleted` }));
 
     } catch (err: any) {
+        res.writeHead(404, { 'Content-type': 'application/json' });
+        return res.end(JSON.stringify({ message: 'User does not exist' }));
+    }
+};
+
+//UPDATE /api/users/id
+
+export const updateUser = async (req: any, res: any) => {
+    try {
+        const userId = req.url?.split('/')[3];
+
+        const indexOfUserToUpdate = usersDB.findIndex((user) => userId === user.id);
+
+        console.log(usersDB);
+
+        if (!validate(userId)) {
+            res.writeHead(400, { 'Content-type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'User id is invalid' }));
+        }
+
+        if (indexOfUserToUpdate < 0) {
+            res.writeHead(404, { 'Content-type': 'application/json' });
+            return res.end(JSON.stringify({ message: 'User does not exist' }));
+        }
+
+        const body = await getRequestBody(req);
+        const user = JSON.parse(body) as User;
+
+        const { username, age, hobbies } = user;
+
+        if (username) {
+            usersDB[indexOfUserToUpdate].username = username;
+        }
+
+        if (age) {
+            usersDB[indexOfUserToUpdate].age = age;
+        }
+
+        if (hobbies) {
+            usersDB[indexOfUserToUpdate].hobbies = hobbies;
+        }
+
+        res.on('close', () => {
+            process.send?.(usersDB);
+        });
+
+        res.writeHead(200, { 'Content-type': 'application/json' });
+        return res.end(JSON.stringify({ message: `User with ${userId} was updated` }));
+
+    } catch (error) {
         res.writeHead(404, { 'Content-type': 'application/json' });
         return res.end(JSON.stringify({ message: 'User does not exist' }));
     }
