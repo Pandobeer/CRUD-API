@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "module": "Node16",
+        "target": "ESNext",
+        "moduleResolution": "Node16",
+        "esModuleInterop": true,
+        "outDir": "build",
+        "forceConsistentCasingInFileNames": true,
+        "allowJs": true,
+        "noImplicitAny": true,
+        "noEmitOnError": false,
+    },
+    "ts-node": {
+        "esm": true
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "webpack",
+        "jest"
+    ]
+}
