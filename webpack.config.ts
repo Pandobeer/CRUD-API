@@ -1,9 +1,11 @@
 import * as path from "path";
 import * as webpack from "webpack";
+import nodeExternals from "webpack-node-externals";
 
 const config: webpack.Configuration = {
     mode: "production",
     externalsPresets: { node: true },
+    externals: [nodeExternals()],
     entry: "./src/index.ts",
     output: {
         path: path.resolve(__dirname, "build"),

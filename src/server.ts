@@ -11,7 +11,6 @@ const PORT = process.env.PORT || 4000;
 
 export const server = () => {
     http.createServer((req: any, res: any) => {
-        console.log(req.url);
 
         if (req.url === '/api/users' && req.method === 'GET') {
             getUsers(req, res);
